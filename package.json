@@ -1,0 +1,29 @@
+{
+  "name": "mandate-spending-firewall",
+  "version": "0.1.0",
+  "description": "Deterministic spending firewall and intent audit ledger for autonomous AI agents on PayPal",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "keywords": ["paypal", "ai-agents", "agentic-commerce", "firewall", "fastify", "audit-ledger"],
+  "author": "Siri & Team Mandate",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^18.0.9",
+    "fastify": "^5.12.8",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
