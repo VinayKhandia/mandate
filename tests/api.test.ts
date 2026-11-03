@@ -128,4 +128,41 @@ describe('Mandate Firewall API & PayPal Two-Phase Lifecycle', () => {
     const token = await paypalService.getAccessToken();
     expect(token).toBe('mock_sandbox_access_token');
   });
+
+  it('7. Supports Indian Rupee (INR) mandates and payments in paise', async () => {
+    const inrMandate = {
+      id: 'mandate-inr-books-1',
+      userId: 'user_bob_in',
+      maxAmountCents: 250000, // ₹2,500.00 (in paise)
+      currency: 'INR',
+      allowedMerchants: ['flipkart_verified', 'amazon_in'],
+      expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      publicKey: 'mock_pubkey_ed25519',
+      signature: 'valid_mock_signature',
+    };
+
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/mandates',
+      payload: inrMandate,
+    });
+    expect(createRes.statusCode).toBe(201);
+
+    const enforceRes = await app.inject({
+      method: 'POST',
+      url: '/api/enforce',
+      payload: {
+        orderId: 'PAYPAL-ORD-INR-1',
+        mandateId: inrMandate.id,
+        merchantId: 'flipkart_verified',
+        amountCents: 199900, // ₹1,999.00
+        currency: 'INR',
+      },
+    });
+    expect(enforceRes.statusCode).toBe(200);
+    const body = JSON.parse(enforceRes.body);
+    expect(body.allowed).toBe(true);
+    expect(body.auditRecord.currency).toBe('INR');
+    expect(body.auditRecord.status).toBe('CAPTURED');
+  });
 });

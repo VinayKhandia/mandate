@@ -1,6 +1,6 @@
 // src/types.ts
 
-export type Currency = 'USD' | 'EUR' | 'GBP';
+export type Currency = 'USD' | 'EUR' | 'GBP' | 'INR';
 
 export type PaymentStatus = 
   | 'PENDING_POLICY'
