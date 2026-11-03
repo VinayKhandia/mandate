@@ -1,7 +1,15 @@
+// src/server.ts
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { registerRoutes } from './routes.js';
 
 const fastify = Fastify({
   logger: true,
+});
+
+// Enable CORS for frontend integration
+await fastify.register(cors, {
+  origin: true,
 });
 
 // Health check endpoint
@@ -12,6 +20,9 @@ fastify.get('/health', async () => {
     timestamp: new Date().toISOString(),
   };
 });
+
+// Register application routes
+await fastify.register(registerRoutes);
 
 const start = async () => {
   try {
