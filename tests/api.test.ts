@@ -4,11 +4,11 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { registerRoutes } from '../src/routes.js';
 import { db, getAllAuditRecords } from '../src/db.js';
+import { paypalService } from '../src/paypal.js';
 
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  // Clear any existing test records
   db.exec('DELETE FROM audit_records; DELETE FROM mandates;');
 
   app = Fastify();
@@ -22,14 +22,14 @@ afterAll(async () => {
   db.close();
 });
 
-describe('Mandate Firewall API & Hash-Chained Audit Ledger', () => {
+describe('Mandate Firewall API & PayPal Two-Phase Lifecycle', () => {
   const sampleMandate = {
     id: 'mandate-birthday-gift-1',
     userId: 'user_alice_42',
     maxAmountCents: 4000, // $40.00
     currency: 'USD',
     allowedMerchants: ['official_store', 'amazon_verified'],
-    expiresAt: new Date(Date.now() + 86400000).toISOString(), // +24 hours
+    expiresAt: new Date(Date.now() + 86400000).toISOString(),
     publicKey: 'mock_pubkey_ed25519',
     signature: 'valid_mock_signature',
   };
@@ -46,7 +46,7 @@ describe('Mandate Firewall API & Hash-Chained Audit Ledger', () => {
     expect(body.mandate.id).toBe(sampleMandate.id);
   });
 
-  it('2. POST /api/enforce ALLOWS payment within mandate limit ($35.00 <= $40.00)', async () => {
+  it('2. POST /api/enforce CAPTURES payment within mandate limit ($35.00 <= $40.00)', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/enforce',
@@ -63,9 +63,10 @@ describe('Mandate Firewall API & Hash-Chained Audit Ledger', () => {
     const body = JSON.parse(res.body);
     expect(body.allowed).toBe(true);
     expect(body.auditRecord.status).toBe('CAPTURED');
+    expect(body.paypal.success).toBe(true);
   });
 
-  it('3. POST /api/enforce BLOCKS prompt-injected payment exceeding cap ($400.00 > $40.00)', async () => {
+  it('3. POST /api/enforce VOIDS prompt-injected payment exceeding cap ($400.00 > $40.00)', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/enforce',
@@ -82,10 +83,11 @@ describe('Mandate Firewall API & Hash-Chained Audit Ledger', () => {
     const body = JSON.parse(res.body);
     expect(body.allowed).toBe(false);
     expect(body.decision.ruleViolated).toBe('MAX_AMOUNT_EXCEEDED');
-    expect(body.auditRecord.status).toBe('BLOCKED');
+    expect(body.auditRecord.status).toBe('VOIDED');
+    expect(body.paypal.status).toBe('VOIDED');
   });
 
-  it('4. POST /api/enforce BLOCKS unallowed merchant', async () => {
+  it('4. POST /api/enforce VOIDS order for unallowed merchant', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/enforce',
@@ -102,6 +104,7 @@ describe('Mandate Firewall API & Hash-Chained Audit Ledger', () => {
     const body = JSON.parse(res.body);
     expect(body.allowed).toBe(false);
     expect(body.decision.ruleViolated).toBe('MERCHANT_NOT_ALLOWED');
+    expect(body.auditRecord.status).toBe('VOIDED');
   });
 
   it('5. GET /api/audit-logs returns tamper-evident hash-chained logs', async () => {
@@ -112,12 +115,17 @@ describe('Mandate Firewall API & Hash-Chained Audit Ledger', () => {
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.count).toBe(3); // 1 captured + 2 blocked
+    expect(body.count).toBe(3);
     
-    // Verify hash chain consistency
     const records = getAllAuditRecords();
     expect(records.length).toBe(3);
     expect(records[0].prevHash).toBeDefined();
     expect(records[0].hash).toBeDefined();
+  });
+
+  it('6. PayPalService token cache handles mock and live sandbox credentials cleanly', async () => {
+    expect(paypalService.isMockMode()).toBe(true);
+    const token = await paypalService.getAccessToken();
+    expect(token).toBe('mock_sandbox_access_token');
   });
 });
