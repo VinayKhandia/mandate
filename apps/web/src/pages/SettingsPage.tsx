@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Database, KeyRound, Play, RefreshCw, Server, Workflow } from 'lucide-react';
+import { Bell, Database, KeyRound, Play, RefreshCw, Server, Wallet, Workflow } from 'lucide-react';
 import { api, MandateApiError } from '../api/client';
 import type { IntegrationsStatusResponse, ReadyResponse } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
+import { PayPalConnectModal } from '../components/paypal/PayPalConnectModal';
 import { ThemeSwitcher } from '../components/ui/BrandMark';
 import { Button, ErrorBanner, InfoBanner, SectionHeader, StatusPill } from '../components/ui/Primitives';
+import { usePayPal } from '../context/PayPalContext';
 
 export const SettingsPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
+  const { account: paypalAccount, openConnectModal } = usePayPal();
   const [ready, setReady] = useState<ReadyResponse | null>(null);
   const [status, setStatus] = useState<IntegrationsStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,6 +99,26 @@ export const SettingsPage: React.FC = () => {
               Not currently signed in with a session JWT. Sign in via Google or Mobile OTP to isolate your mandates and ledger rows.
             </p>
           )}
+        </div>
+
+        {/* PayPal Sandbox Wallet */}
+        <div className="surface-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontWeight: 600 }}>
+              <Wallet size={15} style={{ color: '#0070BA' }} />
+              PayPal Sandbox Wallet
+            </span>
+            <Button size="sm" variant="brass" onClick={openConnectModal}>
+              {paypalAccount.connected ? 'Edit Sandbox ID' : 'Connect'}
+            </Button>
+          </div>
+          <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>Buyer Account: <span className="mono">{paypalAccount.buyerEmail}</span></div>
+            <div>Payer ID: <span className="mono">{paypalAccount.payerId}</span></div>
+            <div>Simulated Balance: <strong style={{ color: 'var(--accent-brass)' }}>{paypalAccount.balanceINR} ({paypalAccount.balanceUSD})</strong></div>
+            <div>Funding Source: <span style={{ color: 'var(--text-primary)' }}>{paypalAccount.fundingInstrument}</span></div>
+            <div>Engine: <span className="mono">PayPal Orders v2 ({paypalAccount.mode})</span></div>
+          </div>
         </div>
 
         <div className="surface-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -200,6 +223,8 @@ export const SettingsPage: React.FC = () => {
           </table>
         </div>
       )}
+
+      <PayPalConnectModal />
     </div>
   );
 };

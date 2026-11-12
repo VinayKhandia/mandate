@@ -18,8 +18,11 @@ import {
   SecurityEventCard,
   ShoppingOptionsCard,
 } from '../components/command/StructuredCards';
-import { Button, ConfirmModal, ErrorBanner, SectionHeader } from '../components/ui/Primitives';
+import { PayPalCheckoutModal } from '../components/paypal/PayPalCheckoutModal';
+import { PayPalConnectModal } from '../components/paypal/PayPalConnectModal';
+import { Button, ErrorBanner, SectionHeader } from '../components/ui/Primitives';
 import { useInspector } from '../context/InspectorContext';
+import { usePayPal } from '../context/PayPalContext';
 
 interface FeedItem {
   id: string;
@@ -44,6 +47,7 @@ const QUICK_COMMANDS = [
 
 export const CommandCentrePage: React.FC = () => {
   const { setTarget, pushActivity } = useInspector();
+  const { account: paypalAccount, openConnectModal } = usePayPal();
   const [input, setInput] = useState('');
   const [activeMandateId, setActiveMandateId] = useState<string | null>(null);
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
@@ -310,6 +314,52 @@ export const CommandCentrePage: React.FC = () => {
         </div>
       )}
 
+      {/* PayPal Sandbox Status Bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+          padding: '8px 12px',
+          borderRadius: 'var(--radius-sm)',
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border-subtle)',
+          marginBottom: '10px',
+          fontSize: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: '#003087',
+              color: '#FFFFFF',
+              fontWeight: 800,
+              fontSize: '11px',
+              fontFamily: 'sans-serif',
+            }}
+          >
+            PayPal Sandbox
+          </span>
+          {paypalAccount.connected ? (
+            <span style={{ color: 'var(--text-secondary)' }}>
+              Linked Buyer: <strong className="mono" style={{ color: 'var(--text-primary)' }}>{paypalAccount.buyerEmail}</strong> · Available:{' '}
+              <strong style={{ color: 'var(--accent-brass)' }}>{paypalAccount.balanceINR}</strong>
+            </span>
+          ) : (
+            <span style={{ color: 'var(--accent-warning)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              ⚠️ PayPal Sandbox Disconnected
+            </span>
+          )}
+        </div>
+        <Button size="sm" variant="secondary" onClick={openConnectModal}>
+          {paypalAccount.connected ? 'Change PayPal Sandbox ID' : 'Connect PayPal Account'}
+        </Button>
+      </div>
+
       {/* Feed */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
         {feed.map((item) => (
@@ -441,20 +491,37 @@ export const CommandCentrePage: React.FC = () => {
         </form>
       </div>
 
-      <ConfirmModal
-        open={Boolean(pendingApproveCaseId)}
-        title="Approve & Capture Payment?"
-        description={`Confirming ${pendingApproveCaseId} triggers PayPal Orders v2 authorization + C5 final catalog & payee verification before capturing funds.`}
-        confirmLabel="Approve & Pay"
-        tone="brass"
-        loading={submitting}
-        onCancel={() => setPendingApproveCaseId(null)}
-        onConfirm={() => {
-          const cid = pendingApproveCaseId;
-          setPendingApproveCaseId(null);
-          if (cid) void approveAndShowReceipt(cid);
-        }}
-      />
+      {/* PayPal Checkout & Connect Modals */}
+      {(() => {
+        const pendingCase = feed
+          .slice()
+          .reverse()
+          .map((f) => f.response?.case)
+          .find((c) => c && c.case_id === pendingApproveCaseId);
+
+        const prop = pendingCase?.proposal;
+
+        return (
+          <>
+            <PayPalCheckoutModal
+              open={Boolean(pendingApproveCaseId)}
+              caseId={pendingApproveCaseId}
+              productTitle={prop?.title || 'Selected Gift Item'}
+              sellerName={prop?.claimed_payee_id ? `Seller Verified (${prop.claimed_payee_id})` : 'Archies Gift Gallery'}
+              amount={prop?.claimed_total ? `${prop.claimed_total.amount} ${prop.claimed_total.currency}` : undefined}
+              loading={submitting}
+              onCancel={() => setPendingApproveCaseId(null)}
+              onConfirm={() => {
+                const cid = pendingApproveCaseId;
+                setPendingApproveCaseId(null);
+                if (cid) void approveAndShowReceipt(cid);
+              }}
+            />
+
+            <PayPalConnectModal />
+          </>
+        );
+      })()}
     </div>
   );
 };

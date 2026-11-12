@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import { PhotonKnot } from './components/three/PhotonKnot';
 import { InspectorProvider } from './context/InspectorContext';
+import { PayPalProvider } from './context/PayPalContext';
 import { AuthPage } from './pages/AuthPage';
 import { CasesPage } from './pages/CasesPage';
 import { CommandCentrePage } from './pages/CommandCentrePage';
@@ -50,29 +51,31 @@ const ProtectedAppGate: React.FC = () => {
 export const App: React.FC = () => (
   <ThemeProvider>
     <AuthProvider>
-      <InspectorProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
+      <PayPalProvider>
+        <InspectorProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
 
-            <Route path="/app" element={<ProtectedAppGate />}>
-              <Route index element={<Navigate to="/app/command-centre" replace />} />
-              <Route path="overview" element={<OverviewPage />} />
-              <Route path="command-centre" element={<CommandCentrePage />} />
-              <Route path="mandates" element={<MandatesPage />} />
-              <Route path="shopping" element={<ShoppingPage />} />
-              <Route path="cases" element={<CasesPage />} />
-              <Route path="ledger" element={<LedgerPage />} />
-              <Route path="trust" element={<TrustPage />} />
-              <Route path="demo-lab" element={<DemoLabPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
+              <Route path="/app" element={<ProtectedAppGate />}>
+                <Route index element={<Navigate to="/app/command-centre" replace />} />
+                <Route path="overview" element={<OverviewPage />} />
+                <Route path="command-centre" element={<CommandCentrePage />} />
+                <Route path="mandates" element={<MandatesPage />} />
+                <Route path="shopping" element={<ShoppingPage />} />
+                <Route path="cases" element={<CasesPage />} />
+                <Route path="ledger" element={<LedgerPage />} />
+                <Route path="trust" element={<TrustPage />} />
+                <Route path="demo-lab" element={<DemoLabPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </InspectorProvider>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </InspectorProvider>
+      </PayPalProvider>
     </AuthProvider>
   </ThemeProvider>
 );
