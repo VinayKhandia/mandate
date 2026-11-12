@@ -7,7 +7,6 @@ from typing import Any
 
 from mandate_core.domain.models import Money, Product
 
-
 MERCHANT_NAMES: dict[str, str] = {
     # INR Gifts & items (India verified merchants)
     "prod-inr-01": "Ferns N Petals (FNP)",
