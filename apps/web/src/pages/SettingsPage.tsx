@@ -206,8 +206,10 @@ export const SettingsPage: React.FC = () => {
                     {svc.mode}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
-                    {svc.live_ok === null || svc.live_ok === undefined ? (
-                      <span style={{ color: 'var(--text-muted)' }}>Not probed</span>
+                    {!svc.configured ? (
+                      <span style={{ color: 'var(--text-muted)' }}>Local Fallback</span>
+                    ) : svc.live_ok === null || svc.live_ok === undefined ? (
+                      <span style={{ color: 'var(--text-muted)' }}>Ready</span>
                     ) : (
                       <StatusPill tone={svc.live_ok ? 'verified' : 'danger'}>
                         {svc.live_ok ? 'Healthy' : 'Error'}

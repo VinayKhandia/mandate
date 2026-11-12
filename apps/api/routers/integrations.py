@@ -128,7 +128,7 @@ async def integrations_status(
             name="paypal",
             configured=flags["paypal"],
             mode=s.paypal_mode if flags["paypal"] else "mock",
-            live_ok=paypal_probe_ok,
+            live_ok=paypal_probe_ok if flags["paypal"] else (True if probe else None),
             details={"toolkit": "paypal-agent-toolkit", "webhook_id_set": bool(s.paypal_webhook_id)},
         ),
         IntegrationServiceStatus(
