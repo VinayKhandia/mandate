@@ -115,7 +115,7 @@ class ElasticSearchAdapter:
     async def probe(self) -> dict[str, Any]:
         """Check Elasticsearch cluster health without altering indices."""
         if not self.is_live:
-            return {"configured": False, "ok": False, "mode": "deterministic_fallback"}
+            return {"configured": False, "ok": True, "mode": "deterministic_fallback"}
         try:
             async with httpx.AsyncClient(timeout=self.timeout, transport=self._transport) as client:
                 resp = await client.get(

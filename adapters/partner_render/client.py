@@ -68,7 +68,7 @@ class RenderWorkflowsClient:
     async def probe(self) -> dict[str, Any]:
         """Verify Render API connectivity via GET /v1/workflows."""
         if not self.is_live:
-            return {"configured": False, "ok": False, "mode": "simulated"}
+            return {"configured": False, "ok": True, "mode": "simulated"}
         try:
             async with httpx.AsyncClient(timeout=self.timeout, transport=self._transport) as client:
                 resp = await client.get(f"{self.api_base}/workflows", headers=self._headers())

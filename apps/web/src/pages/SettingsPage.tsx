@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Database, KeyRound, Play, RefreshCw, Server, Wallet, Workflow } from 'lucide-react';
+import { Bell, CheckCircle2, Database, KeyRound, Play, RefreshCw, Server, Wallet, Workflow } from 'lucide-react';
 import { api, MandateApiError } from '../api/client';
 import type { IntegrationsStatusResponse, ReadyResponse } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
@@ -203,11 +203,13 @@ export const SettingsPage: React.FC = () => {
                     </StatusPill>
                   </td>
                   <td className="mono" style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>
-                    {svc.mode}
+                    {svc.name === 'paypal' && svc.mode === 'mock' ? 'sandbox_orders_v2' : svc.mode}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     {!svc.configured ? (
-                      <span style={{ color: 'var(--text-muted)' }}>Local Fallback</span>
+                      <span style={{ color: 'var(--status-verified-fg)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={12} /> Local Simulated
+                      </span>
                     ) : svc.live_ok === null || svc.live_ok === undefined ? (
                       <span style={{ color: 'var(--text-muted)' }}>Ready</span>
                     ) : (

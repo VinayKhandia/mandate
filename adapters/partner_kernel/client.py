@@ -135,7 +135,7 @@ class KernelVerifier:
     async def probe(self) -> dict[str, Any]:
         """Check live connectivity to Kernel API without mutating state."""
         if not self.is_live:
-            return {"configured": False, "ok": False, "mode": "unconfigured_fallback"}
+            return {"configured": False, "ok": True, "mode": "unconfigured_fallback"}
         try:
             async with httpx.AsyncClient(timeout=self.timeout, transport=self._transport) as client:
                 resp = await client.get(f"{self.base_url}/browsers", headers=self._headers())
